@@ -275,6 +275,27 @@
             background: #10b981;
         }
 
+
+        .calculate-wrapper {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .calculate-btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            background-color: #007BFF;
+            border: none;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .calculate-btn:hover {
+            background-color: #0056b3;
+        }
+
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -523,6 +544,10 @@
                         <button type="button" class="toggle-btn active" onclick="toggleUnit('postTax')">%</button>
                         <button type="button" class="toggle-btn" onclick="toggleUnit('postTax')">$</button>
                     </div>
+                </div>
+
+                <div class="calculate-wrapper">
+                    <button class="btn calculate-btn" onclick="handleCalculate()">Calculate</button>
                 </div>
 
                 <div class="buttons">
@@ -917,6 +942,19 @@
             // SAVE
             doc.save('official-paycheck-report.pdf');
         }
+
+        function handleCalculate() {
+            // Recalculate the results
+            updateResults();
+
+            // Scroll to results section on mobile
+            const resultSection = document.getElementById('results');
+            if (window.innerWidth <= 768 && resultSection) {
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+
 
 
         // Event listeners
