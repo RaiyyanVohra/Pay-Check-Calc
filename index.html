@@ -944,15 +944,19 @@
         }
 
         function handleCalculate() {
-            updateResults(); // your existing function
+            updateResults(); // your actual calculation logic
 
+            // scroll to result section after short delay
             setTimeout(() => {
                 const resultSection = document.getElementById('results');
                 if (resultSection) {
                     resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    console.warn("Scroll target #results not found.");
                 }
-            }, 200); // slight delay ensures result renders before scroll
+            }, 300); // delay helps make sure DOM is updated
         }
+
 
 
 
