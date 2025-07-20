@@ -559,7 +559,7 @@
             </div>
 
             <!-- Output Section -->
-            <div class="output-section">
+            <div id="results" class="output-section">
                 <h2 class="section-title">Calculation Results</h2>
 
                 <!-- Monthly Breakdown -->
@@ -944,15 +944,16 @@
         }
 
         function handleCalculate() {
-            // Recalculate the results
-            updateResults();
+            updateResults(); // your existing function
 
-            // Scroll to results section on mobile
-            const resultSection = document.getElementById('results');
-            if (window.innerWidth <= 768 && resultSection) {
-                resultSection.scrollIntoView({ behavior: 'smooth' });
-            }
+            setTimeout(() => {
+                const resultSection = document.getElementById('results');
+                if (resultSection) {
+                    resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 200); // slight delay ensures result renders before scroll
         }
+
 
 
 
