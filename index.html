@@ -284,7 +284,7 @@
         .calculate-btn {
             padding: 12px 24px;
             font-size: 16px;
-            background-color: #007BFF;
+            background-color: #6366f1;
             border: none;
             color: white;
             border-radius: 6px;
@@ -943,20 +943,21 @@
             doc.save('official-paycheck-report.pdf');
         }
 
-        function handleCalculate() {
-            updateResults(); // your actual calculator function
 
-            // Wait for the DOM to fully update before scrolling
+        function handleCalculate() {
+            calculatePaycheck(); // Fix: call the correct function
+
+            // Wait for the DOM to update before scrolling
             setTimeout(() => {
-                // Query again AFTER updateResults
                 const resultSection = document.querySelector('#results');
                 if (resultSection) {
                     resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 } else {
-                    console.warn("Scroll target #results not found after update.");
+                    console.warn("Scroll target #results not found.");
                 }
-            }, 500); // slightly longer delay
+            }, 300); // Shorter delay is enough now
         }
+
 
 
 
