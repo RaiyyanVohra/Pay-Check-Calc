@@ -944,17 +944,18 @@
         }
 
         function handleCalculate() {
-            updateResults(); // your actual calculation logic
+            updateResults(); // your actual calculator function
 
-            // scroll to result section after short delay
+            // Wait for the DOM to fully update before scrolling
             setTimeout(() => {
-                const resultSection = document.getElementById('results');
+                // Query again AFTER updateResults
+                const resultSection = document.querySelector('#results');
                 if (resultSection) {
                     resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 } else {
-                    console.warn("Scroll target #results not found.");
+                    console.warn("Scroll target #results not found after update.");
                 }
-            }, 300); // delay helps make sure DOM is updated
+            }, 500); // slightly longer delay
         }
 
 
