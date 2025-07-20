@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indiana Paycheck Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95rem;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+            cursor: help;
+        }
+
+        .tooltip .info-icon {
+            width: 16px;
+            height: 16px;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 280px;
+            background-color: #2c3e50;
+            color: white;
+            text-align: left;
+            border-radius: 6px;
+            padding: 12px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -140px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #2c3e50 transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-wrapper input,
+        .input-wrapper select {
+            flex: 1;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .external-link {
+            color: #3498db;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: inline-block;
+        }
+
+        .external-link:hover {
+            text-decoration: underline;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 44px;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        .results-section {
+            margin-top: 40px;
+            scroll-margin-top: 20px;
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .results-header h2 {
+            font-size: 2rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .table-container {
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        td:last-child {
+            text-align: right;
+            font-weight: 600;
+            color: #27ae60;
+        }
+
+        .net-pay-row {
+            background: #e8f5e8;
+            font-weight: bold;
+        }
+
+        .net-pay-row td {
+            color: #27ae60;
+            font-size: 1.1rem;
+        }
+
+        .pdf-btn {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 30px auto;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #27ae60, #219a52);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 44px;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .pdf-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .input-section {
+                padding: 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .tooltip .tooltiptext {
+                width: 250px;
+                margin-left: -125px;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            th,
+            td {
+                padding: 10px 15px;
+            }
+        }
+
+        .toggle-switch {
+            display: flex;
+            background: #e1e8ed;
+            border-radius: 6px;
+            overflow: hidden;
+            min-width: 80px;
+        }
+
+        .toggle-option {
+            flex: 1;
+            padding: 8px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .toggle-option.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .toggle-option:hover:not(.active) {
+            background: #d5dbdb;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 44px;
+            box-shadow: 0 4px 15px rgba(72, 76, 77, 0.3);
+            margin-bottom: 15px;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(127, 140, 141, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Indiana Paycheck Calculator</h1>
+            <p>Calculate your net pay with Indiana's 3.05% state tax rate</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="jobIncome">Your job income</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="jobIncome" value="60000" min="0" step="0.01">
+                            <select id="incomeFreq">
+                                <option value="365">Daily</option>
+                                <option value="52">Weekly</option>
+                                <option value="26">Bi-weekly</option>
+                                <option value="24">Semi-monthly</option>
+                                <option value="12">Monthly</option>
+                                <option value="4">Quarterly</option>
+                                <option value="2">Semi-annually</option>
+                                <option value="1" selected>Annually</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="payFreq">
+                            Pay Frequency
+                            <span class="tooltip">
+                                <span class="info-icon">?</span>
+                                <span class="tooltiptext">How often you're paid. Affects how net income is divided per
+                                    period.</span>
+                            </span>
+                        </label>
+                        <select id="payFreq">
+                            <option value="365">Daily</option>
+                            <option value="52">Weekly</option>
+                            <option value="26">Bi-weekly</option>
+                            <option value="24">Semi-monthly</option>
+                            <option value="12" selected>Monthly</option>
+                            <option value="4">Quarterly</option>
+                            <option value="2">Semi-annually</option>
+                            <option value="1">Annually</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="federalTax">
+                            Federal Income Tax
+                            <span class="tooltip">
+                                <span class="info-icon">?</span>
+                                <span class="tooltiptext">Progressive federal tax: 10%–37% (as of 2025). Used to fund
+                                    federal programs.</span>
+                            </span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="federalTax" value="22" min="0" step="0.01">
+                            <div class="toggle-switch" data-target="federalTaxType">
+                                <span class="toggle-option active" data-value="percent">%</span>
+                                <span class="toggle-option" data-value="dollar">$</span>
+                            </div>
+                            <input type="hidden" id="federalTaxType" value="percent">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="socialSecurity">
+                            Social Security Tax
+                            <span class="tooltip">
+                                <span class="info-icon">?</span>
+                                <span class="tooltiptext">6.2% of gross pay (up to federal cap). Used to fund Social
+                                    Security.</span>
+                            </span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="socialSecurity" value="6.2" min="0" step="0.01">
+                            <div class="toggle-switch" data-target="socialSecurityType">
+                                <span class="toggle-option active" data-value="percent">%</span>
+                                <span class="toggle-option" data-value="dollar">$</span>
+                            </div>
+                            <input type="hidden" id="socialSecurityType" value="percent">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="medicare">
+                            Medicare Tax
+                            <span class="tooltip">
+                                <span class="info-icon">?</span>
+                                <span class="tooltiptext">1.45% standard (plus 0.9% on high income). Funds
+                                    Medicare.</span>
+                            </span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="medicare" value="1.45" min="0" step="0.01">
+                            <div class="toggle-switch" data-target="medicareType">
+                                <span class="toggle-option active" data-value="percent">%</span>
+                                <span class="toggle-option" data-value="dollar">$</span>
+                            </div>
+                            <input type="hidden" id="medicareType" value="percent">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stateTax">
+                            Indiana State Tax
+                            <span class="tooltip">
+                                <span class="info-icon">?</span>
+                                <span class="tooltiptext">Indiana's flat state tax rate (2025). You may override.</span>
+                            </span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="stateTax" value="3.05" min="0" step="0.01">
+                            <div class="toggle-switch" data-target="stateTaxType">
+                                <span class="toggle-option active" data-value="percent">%</span>
+                                <span class="toggle-option" data-value="dollar">$</span>
+                            </div>
+                            <input type="hidden" id="stateTaxType" value="percent">
+                        </div>
+                        <a href="https://en.wikipedia.org/wiki/State_income_tax" target="_blank"
+                            class="external-link">click here to check</a>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cityTax">
+                            City Income Tax
+                            <span class="tooltip">
+                                <span class="info-icon">?</span>
+                                <span class="tooltiptext">Some Indiana cities levy additional taxes. Add if
+                                    applicable.</span>
+                            </span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="cityTax" value="0" min="0" step="0.01">
+                            <div class="toggle-switch" data-target="cityTaxType">
+                                <span class="toggle-option active" data-value="percent">%</span>
+                                <span class="toggle-option" data-value="dollar">$</span>
+                            </div>
+                            <input type="hidden" id="cityTaxType" value="percent">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="preDeductions">
+                            Pre-Tax Deductions
+                            <span class="tooltip">
+                                <span class="info-icon">?</span>
+                                <span class="tooltiptext">Deductions like 401(k), HSA — applied before taxes.</span>
+                            </span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="preDeductions" value="0" min="0" step="0.01">
+                            <div class="toggle-switch" data-target="preDeductionsType">
+                                <span class="toggle-option active" data-value="percent">%</span>
+                                <span class="toggle-option" data-value="dollar">$</span>
+                            </div>
+                            <input type="hidden" id="preDeductionsType" value="percent">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="postDeductions">
+                            Post-Tax Deductions
+                            <span class="tooltip">
+                                <span class="info-icon">?</span>
+                                <span class="tooltiptext">Loan payments, union dues — applied after taxes.</span>
+                            </span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="postDeductions" value="0" min="0" step="0.01">
+                            <div class="toggle-switch" data-target="postDeductionsType">
+                                <span class="toggle-option active" data-value="percent">%</span>
+                                <span class="toggle-option" data-value="dollar">$</span>
+                            </div>
+                            <input type="hidden" id="postDeductionsType" value="percent">
+                        </div>
+                    </div>
+                </div>
+
+                <button class="reset-btn" onclick="resetCalculator()">
+                    Reset
+                </button> <br>
+
+                <button class="calculate-btn" onclick="scrollToResults()">Calculate</button>
+            </div>
+
+            <div class="results-section" id="results">
+                <div class="results-header">
+                    <h2>Paycheck Calculation Results</h2>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header" id="monthlyHeader">Monthly Paycheck Based on Income of $60,000/year</div>
+                    <div class="table-scroll">
+                        <table id="monthlyTable">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th style="text-align: right;">Amount ($)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monthlyTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="table-container" id="frequencyTableContainer" style="display: none;">
+                    <div class="table-header" id="frequencyHeader"></div>
+                    <div class="table-scroll">
+                        <table id="frequencyTable">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th style="text-align: right;">Amount ($)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="frequencyTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <button class="pdf-btn" onclick="generatePDF()">Generate PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = {};
+
+        function getFrequencyName(value) {
+            const map = {
+                '365': 'Daily',
+                '52': 'Weekly',
+                '26': 'Bi-weekly',
+                '24': 'Semi-monthly',
+                '12': 'Monthly',
+                '4': 'Quarterly',
+                '2': 'Semi-annually',
+                '1': 'Annually'
+            };
+            return map[value] || 'Monthly';
+        }
+
+        function calculateTax(amount, rate, type, annualIncome) {
+            if (type === 'percent') {
+                return (annualIncome * rate) / 100;
+            } else {
+                return amount * 12; // Convert monthly to annual
+            }
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function formatNumber(amount) {
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function updateResults() {
+            // Get input values
+            const jobIncome = parseFloat(document.getElementById('jobIncome').value) || 0;
+            const incomeFreq = parseInt(document.getElementById('incomeFreq').value);
+            const payFreq = parseInt(document.getElementById('payFreq').value);
+
+            // Convert income to annual
+            const annualIncome = jobIncome * incomeFreq;
+
+            // Get tax values
+            const federalTax = parseFloat(document.getElementById('federalTax').value) || 0;
+            const federalTaxType = document.getElementById('federalTaxType').value;
+            const socialSecurity = parseFloat(document.getElementById('socialSecurity').value) || 0;
+            const socialSecurityType = document.getElementById('socialSecurityType').value;
+            const medicare = parseFloat(document.getElementById('medicare').value) || 0;
+            const medicareType = document.getElementById('medicareType').value;
+            const stateTax = parseFloat(document.getElementById('stateTax').value) || 0;
+            const stateTaxType = document.getElementById('stateTaxType').value;
+            const cityTax = parseFloat(document.getElementById('cityTax').value) || 0;
+            const cityTaxType = document.getElementById('cityTaxType').value;
+            const preDeductions = parseFloat(document.getElementById('preDeductions').value) || 0;
+            const preDeductionsType = document.getElementById('preDeductionsType').value;
+            const postDeductions = parseFloat(document.getElementById('postDeductions').value) || 0;
+            const postDeductionsType = document.getElementById('postDeductionsType').value;
+
+            // Calculate pre-tax deductions
+            const annualPreDeductions = calculateTax(preDeductions, preDeductions, preDeductionsType, annualIncome);
+            const taxableIncome = annualIncome - annualPreDeductions;
+
+            // Calculate taxes
+            const annualFederalTax = calculateTax(federalTax, federalTax, federalTaxType, taxableIncome);
+            const annualSocialSecurity = calculateTax(socialSecurity, socialSecurity, socialSecurityType, taxableIncome);
+            const annualMedicare = calculateTax(medicare, medicare, medicareType, taxableIncome);
+            const annualStateTax = calculateTax(stateTax, stateTax, stateTaxType, taxableIncome);
+            const annualCityTax = calculateTax(cityTax, cityTax, cityTaxType, taxableIncome);
+
+            const totalTaxes = annualFederalTax + annualSocialSecurity + annualMedicare + annualStateTax + annualCityTax;
+
+            // Calculate post-tax deductions
+            const annualPostDeductions = calculateTax(postDeductions, postDeductions, postDeductionsType, annualIncome);
+
+            // Calculate net pay
+            const annualNetPay = annualIncome - annualPreDeductions - totalTaxes - annualPostDeductions;
+
+            // Store current calculation data
+            currentData = {
+                annualIncome,
+                payFreq,
+                annualPreDeductions,
+                annualFederalTax,
+                annualSocialSecurity,
+                annualMedicare,
+                annualStateTax,
+                annualCityTax,
+                annualPostDeductions,
+                annualNetPay,
+                inputs: {
+                    jobIncome,
+                    incomeFreq: getFrequencyName(incomeFreq.toString()),
+                    payFreq: getFrequencyName(payFreq.toString()),
+                    federalTax: federalTaxType === 'percent' ? `${federalTax}%` : formatCurrency(federalTax),
+                    socialSecurity: socialSecurityType === 'percent' ? `${socialSecurity}%` : formatCurrency(socialSecurity),
+                    medicare: medicareType === 'percent' ? `${medicare}%` : formatCurrency(medicare),
+                    stateTax: stateTaxType === 'percent' ? `${stateTax}%` : formatCurrency(stateTax),
+                    cityTax: cityTaxType === 'percent' ? `${cityTax}%` : formatCurrency(cityTax),
+                    preDeductions: preDeductionsType === 'percent' ? `${preDeductions}%` : formatCurrency(preDeductions),
+                    postDeductions: postDeductionsType === 'percent' ? `${postDeductions}%` : formatCurrency(postDeductions)
+                }
+            };
+
+            // Update monthly table
+            updateTable('monthly', 12, annualIncome);
+
+            // Update frequency table
+            if (payFreq !== 12) {
+                updateTable('frequency', payFreq, annualIncome);
+                document.getElementById('frequencyTableContainer').style.display = 'block';
+            } else {
+                document.getElementById('frequencyTableContainer').style.display = 'none';
+            }
+        }
+
+        function updateTable(tableType, frequency, annualIncome) {
+            const tbody = document.getElementById(tableType + 'TableBody');
+            const header = document.getElementById(tableType + 'Header');
+
+            const frequencyName = getFrequencyName(frequency.toString());
+            const grossPay = annualIncome / frequency;
+            const preTaxDeductions = currentData.annualPreDeductions / frequency;
+            const federalTax = currentData.annualFederalTax / frequency;
+            const socialSecurity = currentData.annualSocialSecurity / frequency;
+            const medicare = currentData.annualMedicare / frequency;
+            const stateTax = currentData.annualStateTax / frequency;
+            const cityTax = currentData.annualCityTax / frequency;
+            const postTaxDeductions = currentData.annualPostDeductions / frequency;
+            const netPay = currentData.annualNetPay / frequency;
+
+            header.textContent = `${frequencyName} Paycheck Based on Income of ${formatCurrency(annualIncome)}/year`;
+
+            tbody.innerHTML = `
+                <tr>
+                    <td>Gross Pay</td>
+                    <td>${formatCurrency(grossPay)}</td>
+                </tr>
+                <tr>
+                    <td>Pre-Tax Deductions</td>
+                    <td>-${formatCurrency(preTaxDeductions)}</td>
+                </tr>
+                <tr>
+                    <td>Federal Income Tax</td>
+                    <td>-${formatCurrency(federalTax)}</td>
+                </tr>
+                <tr>
+                    <td>Social Security Tax</td>
+                    <td>-${formatCurrency(socialSecurity)}</td>
+                </tr>
+                <tr>
+                    <td>Medicare Tax</td>
+                    <td>-${formatCurrency(medicare)}</td>
+                </tr>
+                <tr>
+                    <td>Indiana State Tax (3.05%)</td>
+                    <td>-${formatCurrency(stateTax)}</td>
+                </tr>
+                <tr>
+                    <td>City Income Tax</td>
+                    <td>-${formatCurrency(cityTax)}</td>
+                </tr>
+                <tr>
+                    <td>Post-Tax Deductions</td>
+                    <td>-${formatCurrency(postTaxDeductions)}</td>
+                </tr>
+                <tr class="net-pay-row">
+                    <td><strong>Final Net Pay</strong></td>
+                    <td><strong>${formatCurrency(netPay)}</strong></td>
+                </tr>
+            `;
+        }
+
+        function scrollToResults() {
+            document.getElementById('results').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const jobIncome = parseFloat(document.getElementById('jobIncome').value);
+            const federalTax = parseFloat(document.getElementById('federalTax').value);
+            const payFreq = document.getElementById('payFreq').value;
+
+            if (!jobIncome || jobIncome <= 0 || isNaN(federalTax) || !payFreq) {
+                alert("Please fill in all required fields before generating the PDF.");
+                return;
+            }
+
+            // Set font
+            doc.setFont("helvetica");
+
+            // Title
+            doc.setFontSize(20);
+            doc.setFont("helvetica", "bold");
+            doc.text("Indiana Paycheck Calculator Summary", 20, 30);
+
+            // Timestamp
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            const now = new Date();
+            doc.text(`Generated on ${now.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })}`, 20, 40);
+
+            let yPos = 60;
+
+            // Monthly results table
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text("Monthly Paycheck Breakdown", 20, yPos);
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Based on Annual Income: ${formatCurrency(currentData.annualIncome)}`, 20, yPos + 10);
+            yPos += 25;
+
+            // Monthly table headers
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text("Description", 25, yPos);
+            doc.text("Amount", 130, yPos);
+            yPos += 3;
+
+            // Line under headers
+            doc.setLineWidth(0.5);
+            doc.line(20, yPos, 190, yPos);
+            yPos += 8;
+
+            // Monthly table data
+            doc.setFont("helvetica", "normal");
+            const monthlyData = [
+                ["Gross Pay", formatCurrency(currentData.annualIncome / 12)],
+                ["Pre-Tax Deductions", "-" + formatCurrency(currentData.annualPreDeductions / 12)],
+                ["Federal Income Tax", "-" + formatCurrency(currentData.annualFederalTax / 12)],
+                ["Social Security Tax", "-" + formatCurrency(currentData.annualSocialSecurity / 12)],
+                ["Medicare Tax", "-" + formatCurrency(currentData.annualMedicare / 12)],
+                ["Indiana State Tax", "-" + formatCurrency(currentData.annualStateTax / 12)],
+                ["City Income Tax", "-" + formatCurrency(currentData.annualCityTax / 12)],
+                ["Post-Tax Deductions", "-" + formatCurrency(currentData.annualPostDeductions / 12)]
+            ];
+
+            monthlyData.forEach(([desc, amount]) => {
+                doc.text(desc, 25, yPos);
+                doc.text(amount, 130, yPos);
+                yPos += 7;
+            });
+
+            // Final Net Pay with emphasis
+            yPos += 5;
+            doc.setLineWidth(0.3);
+            doc.line(20, yPos - 3, 190, yPos - 3);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.text("Final Net Pay", 25, yPos);
+            doc.text(formatCurrency(currentData.annualNetPay / 12), 130, yPos);
+            yPos += 15;
+
+            // Add frequency table if different from monthly
+            if (currentData.payFreq !== 12) {
+                const freqName = getFrequencyName(currentData.payFreq.toString());
+
+                // Check if we need a new page
+                if (yPos > 200) {
+                    doc.addPage();
+                    yPos = 30;
+                }
+
+                doc.setFontSize(16);
+                doc.setFont("helvetica", "bold");
+                doc.text(`${freqName} Paycheck Breakdown`, 20, yPos);
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "normal");
+                doc.text(`Based on Annual Income: ${formatCurrency(currentData.annualIncome)}`, 20, yPos + 10);
+                yPos += 25;
+
+                // Frequency table headers
+                doc.setFontSize(11);
+                doc.setFont("helvetica", "bold");
+                doc.text("Description", 25, yPos);
+                doc.text("Amount", 130, yPos);
+                yPos += 3;
+
+                // Line under headers
+                doc.setLineWidth(0.5);
+                doc.line(20, yPos, 190, yPos);
+                yPos += 8;
+
+                // Frequency table data
+                doc.setFont("helvetica", "normal");
+                const frequencyData = [
+                    ["Gross Pay", formatCurrency(currentData.annualIncome / currentData.payFreq)],
+                    ["Pre-Tax Deductions", "-" + formatCurrency(currentData.annualPreDeductions / currentData.payFreq)],
+                    ["Federal Income Tax", "-" + formatCurrency(currentData.annualFederalTax / currentData.payFreq)],
+                    ["Social Security Tax", "-" + formatCurrency(currentData.annualSocialSecurity / currentData.payFreq)],
+                    ["Medicare Tax", "-" + formatCurrency(currentData.annualMedicare / currentData.payFreq)],
+                    ["Indiana State Tax", "-" + formatCurrency(currentData.annualStateTax / currentData.payFreq)],
+                    ["City Income Tax", "-" + formatCurrency(currentData.annualCityTax / currentData.payFreq)],
+                    ["Post-Tax Deductions", "-" + formatCurrency(currentData.annualPostDeductions / currentData.payFreq)]
+                ];
+
+                frequencyData.forEach(([desc, amount]) => {
+                    doc.text(desc, 25, yPos);
+                    doc.text(amount, 130, yPos);
+                    yPos += 2;
+                });
+
+                // Final Net Pay with emphasis
+                yPos += 5;
+                doc.setLineWidth(0.3);
+                doc.line(20, yPos - 3, 190, yPos - 3);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(12);
+                doc.text("Final Net Pay", 25, yPos);
+                doc.text(formatCurrency(currentData.annualNetPay / currentData.payFreq), 130, yPos);
+            }
+
+            // Save PDF
+            doc.save('Indiana_Paycheck_Calculator_Summary.pdf');
+        }
+
+
+
+        async function fetchLatestTaxRates() {
+            const year = new Date().getFullYear();
+            try {
+                const response = await fetch('https://yourdomain.com/data/tax_rates.json');
+                const rates = await response.json();
+
+                const yearRates = rates[year] || rates['2025']; // fallback to 2025 if year missing
+
+                document.getElementById('federalTax').value = yearRates.federal;
+                document.getElementById('federalTaxType').value = 'percent';
+
+                document.getElementById('socialSecurity').value = yearRates.social_security;
+                document.getElementById('socialSecurityType').value = 'percent';
+
+                document.getElementById('medicare').value = yearRates.medicare;
+                document.getElementById('medicareType').value = 'percent';
+
+                document.getElementById('stateTax').value = yearRates.state;
+                document.getElementById('stateTaxType').value = 'percent';
+
+                document.getElementById('cityTax').value = yearRates.city;
+                document.getElementById('cityTaxType').value = 'percent';
+
+                updateResults();
+            } catch (error) {
+                console.warn('⚠️ Failed to fetch tax rates. Defaults will be used.');
+                // no alert — silent fallback
+                updateResults(); // Ensure results are still calculated
+            }
+        }
+
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentYear = new Date().getFullYear();
+            const supportedYear = 2025;
+
+            if (currentYear > supportedYear) {
+                const banner = document.createElement('div');
+                banner.innerHTML = `⚠️ <strong>Warning:</strong> This calculator uses tax rates for ${supportedYear}. 
+        You are in ${currentYear}, and tax rates may have changed. 
+        <a href="https://www.in.gov/dor/tax-forms/" target="_blank" style="color: #fff; text-decoration: underline;">Check updated Indiana tax rates</a>.`;
+                banner.style.cssText = `
+            background-color: #e74c3c;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.95rem;
+        `;
+                document.body.insertBefore(banner, document.body.firstChild);
+            }
+        });
+
+        function resetCalculator() {
+            const fields = [
+                'jobIncome', 'federalTax', 'socialSecurity', 'medicare',
+                'stateTax', 'cityTax', 'preDeductions', 'postDeductions'
+            ];
+
+            fields.forEach(id => {
+                document.getElementById(id).value = 0;
+            });
+
+            // Set income frequency and pay frequency to default
+            document.getElementById('incomeFreq').value = 1; // Annually
+            document.getElementById('payFreq').value = 12; // Monthly
+
+            // Reset all toggle types to percent
+            document.querySelectorAll('input[type=hidden]').forEach(el => el.value = 'percent');
+            document.querySelectorAll('.toggle-switch').forEach(switchBox => {
+                switchBox.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
+                const percentBtn = switchBox.querySelector('[data-value=percent]');
+                if (percentBtn) percentBtn.classList.add('active');
+            });
+
+            updateResults();
+        }
+
+
+        // Event listeners for real-time updates
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize toggle switches
+            document.querySelectorAll('.toggle-switch').forEach(toggleSwitch => {
+                toggleSwitch.addEventListener('click', function (e) {
+                    if (e.target.classList.contains('toggle-option')) {
+                        const targetId = this.getAttribute('data-target');
+                        const value = e.target.getAttribute('data-value');
+
+                        // Update hidden input
+                        document.getElementById(targetId).value = value;
+
+                        // Update visual state
+                        this.querySelectorAll('.toggle-option').forEach(opt => {
+                            opt.classList.remove('active');
+                        });
+                        e.target.classList.add('active');
+
+                        // Trigger calculation update
+                        updateResults();
+                    }
+                });
+            });
+
+            const inputs = [
+                'jobIncome', 'incomeFreq', 'payFreq', 'federalTax',
+                'socialSecurity', 'medicare', 'stateTax', 'cityTax',
+                'preDeductions', 'postDeductions'
+            ];
+
+            inputs.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('input', updateResults);
+                    element.addEventListener('change', updateResults);
+                }
+            });
+
+            // Initial calculation
+            updateResults();
+
+            fetchLatestTaxRates();
+        });
+    </script>
+</body>
+
+</html>
