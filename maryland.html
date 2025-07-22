@@ -512,6 +512,8 @@
                         onclick="window.open('https://en.wikipedia.org/wiki/State_income_tax', '_blank')">
                         click here to check
                     </div>
+                    <div id="stateRateInfo" style="font-size: 12px; color: #4f46e5; margin-top: 4px;"></div>
+
                 </div>
 
                 <!-- City Income Tax -->
@@ -740,9 +742,15 @@
 
             // Update stateTax field only if user hasn't modified it manually
             const stateTaxInput = document.getElementById('stateTax');
+            const rateInfo = document.getElementById('stateRateInfo');
+
             if (!stateTaxInput.getAttribute('data-user-modified')) {
                 stateTaxInput.value = suggestedStateRate;
+                rateInfo.textContent = `Auto-applied Maryland state tax: ${suggestedStateRate}% based on your filing status and income.`;
+            } else {
+                rateInfo.textContent = `(You manually modified the state tax rate)`;
             }
+
 
             const grossPay = annualSalary / frequencyMultipliers[payFrequency];
 
@@ -789,6 +797,10 @@
             // enable download button if valid
             const isValid = document.getElementById('jobIncome').value.trim() && document.getElementById('federalTax').value.trim();
             document.getElementById('downloadBtn').disabled = !isValid;
+
+            document.getElementById('stateRateInfo').textContent =
+                `Auto-applied Maryland state tax: ${suggestedStateRate}% based on your filing status and income`;
+
         }
 
         function handleCalculate() {
@@ -839,6 +851,8 @@
             }
             return rate;
         }
+
+        
 
 
         function downloadPDF() {
@@ -933,6 +947,13 @@
             document.getElementById('stateTax').addEventListener('input', () => {
                 document.getElementById('stateTax').setAttribute('data-user-modified', 'true');
             });
+
+            document.getElementById('filingStatus').addEventListener('change', () => {
+                document.getElementById('stateTax').removeAttribute('data-user-modified');
+                calculatePaycheck();
+            });
+
+
 
             loadTaxRates();
             calculatePaycheck();
