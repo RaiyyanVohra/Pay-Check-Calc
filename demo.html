@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Missouri Paycheck Calculator</title>
+    <title>Maryland Paycheck Calculator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
@@ -387,8 +387,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>💰 Missouri Paycheck Calculator</h1>
-            <p>Calculate your take‑home salary with Missouri's slab-based state tax (editable)</p>
+            <h1>💰 Maryland Paycheck Calculator</h1>
+            <p>Calculate your take‑home salary with Maryland's slab-based state tax (editable)</p>
         </div>
 
 
@@ -428,7 +428,7 @@
                     <label class="input-label">
                         Pay Frequency <span class="required">*</span>
                         <span class="tooltip"
-                            data-tooltip="	U.S. federal tax applies in  Missouri Ranges 10%-37%.">❓</span>
+                            data-tooltip="	U.S. federal tax applies in Maryland. Ranges 10%-37%.">❓</span>
                     </label>
                     <select id="payFrequency" required>
                         <option value="daily">Daily</option>
@@ -447,13 +447,12 @@
                     <label class="input-label">
                         Filing Status <span class="required">*</span>
                         <span class="tooltip"
-                            data-tooltip=" Missouri state tax rate depends on your filing status and annual income.">❓</span>
+                            data-tooltip="Maryland state tax rate depends on your filing status and annual income.">❓</span>
                     </label>
-                    <select id="filingStatus" onchange="calculatePaycheck()">
-                        <option value="single">Single</option>
-                        <option value="married">Married Filing Jointly</option>
+                    <select id="filingStatus" required>
+                        <option value="single">Single filer</option>
+                        <option value="married">Married filing jointly</option>
                     </select>
-
                 </div>
 
                 <!-- Federal Income Tax -->
@@ -503,10 +502,10 @@
                     <label class="input-label">
                         State Income Tax
                         <span class="tooltip"
-                            data-tooltip=" Missouri’s tax is slab-based and depends on your filing status and income.">❓</span>
+                            data-tooltip="Maryland’s tax is slab-based and depends on your filing status and income.">❓</span>
                     </label>
                     <div class="input-wrapper">
-                        <input id="stateTax" type="number" oninput="this.setAttribute('data-user-modified', 'true')">
+                        <input type="number" id="stateTax" placeholder="0" step="0.01">
                         <button type="button" class="toggle-btn active" onclick="toggleUnit('state')">%</button>
                         <button type="button" class="toggle-btn" onclick="toggleUnit('state')">$</button>
                     </div>
@@ -523,7 +522,7 @@
                     <label class="input-label">
                         City Income Tax
                         <span class="tooltip"
-                            data-tooltip="	Some  Missouri counties may apply extra local tax (optional).">❓</span>
+                            data-tooltip="	Some Maryland counties may apply extra local tax (optional).">❓</span>
                     </label>
                     <div class="input-wrapper">
                         <input type="number" id="cityTax" placeholder="0" step="0.01">
@@ -734,167 +733,32 @@
             return unit === '%' ? (val / 100) * base : val;
         }
 
-        function getFallbackBrackets() {
-            const moBrackets = [
-                { limit: 1273, rate: 0, plus: 0 }, // Income $0 to $1,273 is not taxed
-                { limit: 2546, rate: 2.0, plus: 0 }, // More than $1,273 to $2,546 is taxed at 2 percent
-                { limit: 3819, rate: 2.5, plus: 25 }, // More than $2,546 to $3,819 is taxed at 2.5 percent plus $25
-                { limit: 5092, rate: 3.0, plus: 57 }, // More than $3,819 to $5,092 is taxed at 3 percent plus $57
-                { limit: 6365, rate: 3.5, plus: 95 }, // More than $5,092 to $6,365 is taxed at 3.5 percent plus $95
-                { limit: 7638, rate: 4.0, plus: 140 }, // More than $6,365 to $7,638 is taxed at 4 percent plus $140
-                { limit: 8911, rate: 4.5, plus: 191 }, // More than $7,638 to $8,911 is taxed at 4.5 percent plus $191
-                { limit: Infinity, rate: 4.95, plus: 248 } // More than $8,911 is taxed at 4.95 percent plus $248
-            ];
-
-            return {
-                single: moBrackets,
-                married: moBrackets
-            };
-        }
-        // Missouri logic
-        function getMissouriStateTaxDetails(annualIncome, filingStatus) {
-            let brackets = window.liveTaxBrackets || getFallbackBrackets();
-            const selectedBrackets = brackets[filingStatus];
-
-            let applied = null;
-            let previousLimit = 0;
-
-            // Find the correct bracket
-            for (let i = 0; i < selectedBrackets.length; i++) {
-                if (annualIncome <= selectedBrackets[i].limit) {
-                    applied = selectedBrackets[i];
-                    break;
-                }
-                previousLimit = selectedBrackets[i].limit;
-            }
-
-            // If no bracket found (shouldn't happen with Infinity), use the last one
-            if (!applied) {
-                applied = selectedBrackets[selectedBrackets.length - 1];
-                previousLimit = selectedBrackets[selectedBrackets.length - 2].limit;
-            }
-
-            // Calculate tax based on the bracket
-            const excessIncome = Math.max(0, annualIncome - previousLimit);
-            const calculatedTax = applied.plus + (excessIncome * (applied.rate / 100));
-
-            return {
-                rate: applied.rate,
-                bracketText: `>$${previousLimit.toLocaleString()}`,
-                calculatedTax: Math.max(0, parseFloat(calculatedTax.toFixed(2)))
-            };
-        }
-
-
-
-        function updateStateTaxAutomatically() {
-            const jobIncome = +document.getElementById('jobIncome').value || 0;
-            const incomeType = document.getElementById('incomeType').value;
-            const annualSalary = jobIncome * frequencyMultipliers[incomeType];
-            const filingStatus = document.getElementById('filingStatus').value;
-
-            const {
-                rate: suggestedStateRate,
-                bracketText,
-                calculatedTax
-            } = getMissouriStateTaxDetails(annualSalary, filingStatus);
-
-            const stateTaxInput = document.getElementById('stateTax');
-            const rateInfo = document.getElementById('stateRateInfo');
-
-            if (!stateTaxInput.getAttribute('data-user-modified')) {
-                // Optional: show rate for display only (do NOT rely on this as your real tax)
-                stateTaxInput.value = suggestedStateRate;
-
-                rateInfo.textContent = `Auto-applied Missouri state tax: ${suggestedStateRate}% — based on bracket ${bracketText}.`;
-            }
-        }
-
-        function loadTaxRates() {
-            // Load federal rates
-            ['federalTax', 'socialSecurityTax', 'medicareTax'].forEach((id, idx) => {
-                document.getElementById(id).value = idx === 0 ? 22 : (idx === 1 ? 6.2 : 1.45);
-            });
-
-            // Fetch live Missouri tax data
-            fetchLiveTaxData();
-        }
-
-        async function fetchLiveTaxData() {
-
-            const response = await fetch('https://api.taxrates.com/v1/missouri/income-tax-brackets', {
-                headers: {
-                    'Authorization': 'Bearer YOUR_API_KEY',
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) throw new Error('Failed to fetch tax data');
-
-            const taxData = await response.json();
-
-            // ✅ Set live data globally
-            window.liveTaxBrackets = {
-                single: taxData.single_brackets,
-                married: taxData.married_brackets
-            };
-
-            document.querySelector('.api-status .status-dot').style.background = '#10b981';
-            document.querySelector('.api-status span').textContent = 'Tax rates updated (Live)';
-            calculatePaycheck();
-
-            // ✅ Show fallback status
-            console.warn('⚠️ API failed, using fallback:', err.message);
-            window.liveTaxBrackets = null; // force fallback
-            document.querySelector('.api-status .status-dot').style.background = '#ef4444';
-            document.querySelector('.api-status span').textContent = 'Failed to load API – using fallback rates';
-            calculatePaycheck();
-
-        }
-
-
-
-
         function calculatePaycheck() {
             const jobIncome = +document.getElementById('jobIncome').value || 0;
             const incomeType = document.getElementById('incomeType').value;
             const payFrequency = document.getElementById('payFrequency').value;
             const annualSalary = jobIncome * frequencyMultipliers[incomeType];
             const filingStatus = document.getElementById('filingStatus')?.value || 'single';
+            const suggestedStateRate = getMarylandStateTaxRate(annualSalary, filingStatus);
 
+            // Update stateTax field only if user hasn't modified it manually
             const stateTaxInput = document.getElementById('stateTax');
             const rateInfo = document.getElementById('stateRateInfo');
 
-            // ✅ Get full Missouri tax info including exact tax amount
-            const {
-                rate: suggestedStateRate,
-                bracketText,
-                calculatedTax
-            } = getMissouriStateTaxDetails(annualSalary, filingStatus);
-
-            // ✅ Only auto-apply % rate if user hasn’t modified manually
             if (!stateTaxInput.getAttribute('data-user-modified')) {
                 stateTaxInput.value = suggestedStateRate;
-                rateInfo.textContent = `Auto-applied Missouri state tax: ${suggestedStateRate}% — based on your income and filing status bracket ${bracketText}.`;
+                rateInfo.textContent = `Auto-applied Maryland state tax: ${suggestedStateRate}% based on your filing status and income.`;
             } else {
                 rateInfo.textContent = `(You manually modified the state tax rate)`;
             }
 
+
             const grossPay = annualSalary / frequencyMultipliers[payFrequency];
+
             const preTax = getTaxAmount(+document.getElementById('preTaxDeductions').value, taxUnits.preTax, grossPay);
             const taxableIncome = grossPay - preTax;
-
             const fed = getTaxAmount(+document.getElementById('federalTax').value, taxUnits.federal, taxableIncome);
-
-            // ✅ Instead of using percentage, use the calculated tax divided over pay period
-            const state = calculatedTax / frequencyMultipliers[payFrequency];
-            console.log("✅ DEBUG | Annual Income:", annualSalary);
-            console.log("✅ DEBUG | Filing Status:", filingStatus);
-            console.log("✅ DEBUG | Bracket Rate:", suggestedStateRate);
-            console.log("✅ DEBUG | Calculated Annual State Tax:", calculatedTax);
-            console.log("✅ DEBUG | Final Per-Pay State Tax:", state);
-
-
+            const state = getTaxAmount(+document.getElementById('stateTax').value, taxUnits.state, taxableIncome);
             const city = getTaxAmount(+document.getElementById('cityTax').value, taxUnits.city, taxableIncome);
             const social = getTaxAmount(+document.getElementById('socialSecurityTax').value, taxUnits.socialSecurity, taxableIncome);
             const medicare = getTaxAmount(+document.getElementById('medicareTax').value, taxUnits.medicare, taxableIncome);
@@ -903,7 +767,7 @@
             const totalTaxes = fed + state + city + social + medicare;
             const finalPay = grossPay - preTax - totalTaxes - postTax;
 
-            // update UI
+            // populate UI
             const fmt = v => `$${v.toFixed(2)}`;
             document.getElementById('monthly-gross').textContent = fmt(grossPay);
             document.getElementById('monthly-pretax').textContent = `-${fmt(preTax)}`;
@@ -935,17 +799,64 @@
             const isValid = document.getElementById('jobIncome').value.trim() && document.getElementById('federalTax').value.trim();
             document.getElementById('downloadBtn').disabled = !isValid;
 
-            // Final UI update for tax info (this line will still run even if user modified it)
             document.getElementById('stateRateInfo').textContent =
-                `Auto-applied Missouri state tax: ${suggestedStateRate}% — based on your income and filing status bracket ${bracketText}.`;
+                `Auto-applied Maryland state tax: ${suggestedStateRate}% based on your filing status and income`;
+
         }
-
-
 
         function handleCalculate() {
             calculatePaycheck();
             document.querySelector('#results').scrollIntoView({ behavior: 'smooth' });
         }
+
+        function loadTaxRates() {
+            ['federalTax', 'socialSecurityTax', 'medicareTax'].forEach((id, idx) => {
+                document.getElementById(id).value = idx === 0 ? 22 : (idx === 1 ? 6.2 : 1.45);
+            });
+            calculatePaycheck();
+        }
+
+        // Missouri logic
+        function getMissouriStateTaxRate(annualIncome, filingStatus) {
+            const brackets = {
+                single: [
+                    { limit: 107, rate: 1.5 },
+                    { limit: 1073, rate: 2.0 },
+                    { limit: 2146, rate: 2.5 },
+                    { limit: 3219, rate: 3.0 },
+                    { limit: 4292, rate: 3.5 },
+                    { limit: 5365, rate: 4.0 },
+                    { limit: 6438, rate: 4.5 },
+                    { limit: 7511, rate: 5.0 },
+                    { limit: 8584, rate: 5.4 }
+                ],
+                married: [
+                    { limit: 107, rate: 1.5 },
+                    { limit: 1073, rate: 2.0 },
+                    { limit: 2146, rate: 2.5 },
+                    { limit: 3219, rate: 3.0 },
+                    { limit: 4292, rate: 3.5 },
+                    { limit: 5365, rate: 4.0 },
+                    { limit: 6438, rate: 4.5 },
+                    { limit: 7511, rate: 5.0 },
+                    { limit: 8584, rate: 5.4 }
+                ]
+            };
+
+            let rate = 0;
+            const selectedBrackets = brackets[filingStatus];
+
+            for (let i = 0; i < selectedBrackets.length; i++) {
+                if (annualIncome > selectedBrackets[i].limit) {
+                    rate = selectedBrackets[i].rate;
+                } else {
+                    break;
+                }
+            }
+
+            return rate;
+        }
+
 
 
 
@@ -953,12 +864,11 @@
 
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
-
             const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
             let y = 40;
 
             // 🏷 Title
-            doc.setFont('helvetica', 'bold').setFontSize(18).text('Missouri Paycheck Report', 40, y);
+            doc.setFont('helvetica', 'bold').setFontSize(18).text('Maryland Paycheck Report', 40, y);
             y += 24;
 
             // 🕒 Timestamp
@@ -974,20 +884,12 @@
 
             // 📋 Filing Info (already added)
             const filingStatus = document.getElementById('filingStatus')?.value || 'single';
-            const annualSalary = parseFloat(document.getElementById('jobIncome')?.value) || 0;
             const stateTaxInput = document.getElementById('stateTax');
             doc.setFont('helvetica', 'normal').setFontSize(10)
                 .text(`Filing Status: ${filingStatus === 'married' ? 'Married Filing Jointly' : 'Single Filer'}`, 40, y);
             y += 14;
-            doc.text(`Missouri State Tax Rate Used: ${stateTaxInput.value}%`, 40, y);
-            y += 14; // slightly less spacing before the next line
-
-            // ✅ Clean bracket explanation, no override, properly aligned
-            const { rate, bracketText } = getMissouriStateTaxDetails(annualSalary, filingStatus);
-            doc.text(`State Tax Applied (Auto): ${rate}% — based on Missouri bracket ${bracketText}`, 40, y);
-            y += 20; // clean spacing before the next section
-
-
+            doc.text(`Maryland State Tax Rate Used: ${stateTaxInput.value}%`, 40, y);
+            y += 20;
 
 
 
@@ -1022,28 +924,16 @@
                 addSection(`${freq.charAt(0).toUpperCase() + freq.slice(1)} Breakdown`, freqData);
             }
 
-
             y += 4;
             doc.setFontSize(9).setFont('helvetica', 'italic').setTextColor(100)
                 .text('This report is an automated estimate and should be verified with a tax professional.', 40, y);
             y += 10;
-            doc.text('Powered by Missouri  Paycheck Calculator © 2025', 40, y);
+            doc.text('Powered by Maryland Paycheck Calculator © 2025', 40, y);
             doc.save('official-paycheck-report.pdf');
         }
 
-
-
-
-
-
-
-
-
-        setInterval(fetchLiveTaxData, 24 * 60 * 60 * 1000);
-
-
         document.addEventListener('DOMContentLoaded', () => {
-            ['payFrequency', 'federalTax', 'socialSecurityTax', 'medicareTax', 'cityTax', 'preTaxDeductions', 'postTaxDeductions']
+            ['jobIncome', 'incomeType', 'payFrequency', 'federalTax', 'socialSecurityTax', 'medicareTax', 'stateTax', 'cityTax', 'preTaxDeductions', 'postTaxDeductions']
                 .forEach(id => {
                     const el = document.getElementById(id);
                     if (!el) return;
@@ -1060,42 +950,20 @@
                     });
                 });
 
+            // Track if user changes the state tax field manually
+            document.getElementById('stateTax').addEventListener('input', () => {
+                document.getElementById('stateTax').setAttribute('data-user-modified', 'true');
+            });
 
-
-
-            // Add specific event listeners for filing status and income changes
             document.getElementById('filingStatus').addEventListener('change', () => {
-                const stateTaxInput = document.getElementById('stateTax');
-                stateTaxInput.removeAttribute('data-user-modified');
+                document.getElementById('stateTax').removeAttribute('data-user-modified');
                 calculatePaycheck();
-            });
-
-            document.getElementById('jobIncome').addEventListener('input', () => {
-                const stateTaxInput = document.getElementById('stateTax');
-                // Only reset if user hasn't manually modified the field recently
-                if (!stateTaxInput.getAttribute('data-user-modified')) {
-                    calculatePaycheck();
-                }
-            });
-
-            document.getElementById('incomeType').addEventListener('change', () => {
-                const stateTaxInput = document.getElementById('stateTax');
-                stateTaxInput.removeAttribute('data-user-modified');
-                calculatePaycheck();
-            });
-
-            // Mark state tax as user-modified when manually changed
-            document.getElementById('stateTax').addEventListener('input', function () {
-                this.setAttribute('data-user-modified', 'true');
             });
 
 
 
             loadTaxRates();
-            // Load live tax data on startup
-            fetchLiveTaxData();
             calculatePaycheck();
-
         });
     </script>
 </body>
