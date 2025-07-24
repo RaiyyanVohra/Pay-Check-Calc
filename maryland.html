@@ -103,7 +103,7 @@
         }
 
         .tooltip {
-            margin-left: 8px;   
+            margin-left: 8px;
             cursor: help;
             color: #6b7280;
             position: relative;
@@ -118,7 +118,7 @@
             background: #1f2937;
             color: white;
             padding: 8px 12px;
-            margin-left: 100px;   
+            margin-left: 100px;
             border-radius: 6px;
             font-size: 12px;
             white-space: nowrap;
@@ -411,6 +411,7 @@
                     <div class="input-wrapper">
                         <input type="number" id="jobIncome" placeholder="60000" required>
                         <select id="incomeType">
+                            <option value="hourly">Hourly</option>
                             <option value="daily">Daily</option>
                             <option value="weekly">Weekly</option>
                             <option value="bi-weekly">Bi‑weekly</option>
@@ -431,6 +432,7 @@
                             data-tooltip="	U.S. federal tax applies in Maryland. Ranges 10%-37%.">❓</span>
                     </label>
                     <select id="payFrequency" required>
+                        <option value="hourly">Hourly</option>
                         <option value="daily">Daily</option>
                         <option value="weekly">Weekly</option>
                         <option value="bi-weekly">Bi‑weekly</option>
@@ -692,6 +694,7 @@
         };
 
         const frequencyMultipliers = {
+            hourly: 2080,
             daily: 365,
             weekly: 52,
             'bi-weekly': 26,
@@ -752,43 +755,66 @@
                 rateInfo.textContent = `(You manually modified the state tax rate)`;
             }
 
+            // Always calculate monthly for first table
+            const monthlyGrossPay = annualSalary / 12;
+            // Calculate frequency-specific for second table
+            const frequencyGrossPay = annualSalary / frequencyMultipliers[payFrequency];
 
-            const grossPay = annualSalary / frequencyMultipliers[payFrequency];
+            // Use monthlyGrossPay for all monthly calculations
+            const monthlyPreTax = getTaxAmount(+document.getElementById('preTaxDeductions').value, taxUnits.preTax, monthlyGrossPay);
+            const monthlyTaxableIncome = monthlyGrossPay - monthlyPreTax;
+            const monthlyFed = getTaxAmount(+document.getElementById('federalTax').value, taxUnits.federal, monthlyTaxableIncome);
+            const monthlyState = getTaxAmount(+document.getElementById('stateTax').value, taxUnits.state, monthlyTaxableIncome);
+            const monthlyCity = getTaxAmount(+document.getElementById('cityTax').value, taxUnits.city, monthlyTaxableIncome);
+            const monthlySocial = getTaxAmount(+document.getElementById('socialSecurityTax').value, taxUnits.socialSecurity, monthlyTaxableIncome);
+            const monthlyMedicare = getTaxAmount(+document.getElementById('medicareTax').value, taxUnits.medicare, monthlyTaxableIncome);
+            const monthlyPostTax = getTaxAmount(+document.getElementById('postTaxDeductions').value, taxUnits.postTax, monthlyGrossPay);
+            const monthlyFinalPay = monthlyGrossPay - monthlyPreTax - (monthlyFed + monthlyState + monthlyCity + monthlySocial + monthlyMedicare) - monthlyPostTax;
 
-            const preTax = getTaxAmount(+document.getElementById('preTaxDeductions').value, taxUnits.preTax, grossPay);
-            const taxableIncome = grossPay - preTax;
-            const fed = getTaxAmount(+document.getElementById('federalTax').value, taxUnits.federal, taxableIncome);
-            const state = getTaxAmount(+document.getElementById('stateTax').value, taxUnits.state, taxableIncome);
-            const city = getTaxAmount(+document.getElementById('cityTax').value, taxUnits.city, taxableIncome);
-            const social = getTaxAmount(+document.getElementById('socialSecurityTax').value, taxUnits.socialSecurity, taxableIncome);
-            const medicare = getTaxAmount(+document.getElementById('medicareTax').value, taxUnits.medicare, taxableIncome);
-            const postTax = getTaxAmount(+document.getElementById('postTaxDeductions').value, taxUnits.postTax, grossPay);
-
-            const totalTaxes = fed + state + city + social + medicare;
-            const finalPay = grossPay - preTax - totalTaxes - postTax;
+            // Use frequencyGrossPay for frequency-specific calculations
+            const freqPreTax = getTaxAmount(+document.getElementById('preTaxDeductions').value, taxUnits.preTax, frequencyGrossPay);
+            const freqTaxableIncome = frequencyGrossPay - freqPreTax;
+            const freqFed = getTaxAmount(+document.getElementById('federalTax').value, taxUnits.federal, freqTaxableIncome);
+            const freqState = getTaxAmount(+document.getElementById('stateTax').value, taxUnits.state, freqTaxableIncome);
+            const freqCity = getTaxAmount(+document.getElementById('cityTax').value, taxUnits.city, freqTaxableIncome);
+            const freqSocial = getTaxAmount(+document.getElementById('socialSecurityTax').value, taxUnits.socialSecurity, freqTaxableIncome);
+            const freqMedicare = getTaxAmount(+document.getElementById('medicareTax').value, taxUnits.medicare, freqTaxableIncome);
+            const freqPostTax = getTaxAmount(+document.getElementById('postTaxDeductions').value, taxUnits.postTax, frequencyGrossPay);
+            const freqFinalPay = frequencyGrossPay - freqPreTax - (freqFed + freqState + freqCity + freqSocial + freqMedicare) - freqPostTax;
 
             // populate UI
             const fmt = v => `$${v.toFixed(2)}`;
-            document.getElementById('monthly-gross').textContent = fmt(grossPay);
-            document.getElementById('monthly-pretax').textContent = `-${fmt(preTax)}`;
-            document.getElementById('monthly-federal').textContent = `-${fmt(fed)}`;
-            document.getElementById('monthly-state').textContent = `-${fmt(state)}`;
-            document.getElementById('monthly-city').textContent = `-${fmt(city)}`;
-            document.getElementById('monthly-social').textContent = `-${fmt(social)}`;
-            document.getElementById('monthly-medicare').textContent = `-${fmt(medicare)}`;
-            document.getElementById('monthly-posttax').textContent = `-${fmt(postTax)}`;
-            document.getElementById('monthly-final').textContent = fmt(finalPay);
 
-            const capFreq = payFrequency.charAt(0).toUpperCase() + payFrequency.slice(1);
+            // Always populate monthly results in first table
+            document.getElementById('monthly-gross').textContent = fmt(monthlyGrossPay);
+            document.getElementById('monthly-pretax').textContent = `-${fmt(monthlyPreTax)}`;
+            document.getElementById('monthly-federal').textContent = `-${fmt(monthlyFed)}`;
+            document.getElementById('monthly-state').textContent = `-${fmt(monthlyState)}`;
+            document.getElementById('monthly-city').textContent = `-${fmt(monthlyCity)}`;
+            document.getElementById('monthly-social').textContent = `-${fmt(monthlySocial)}`;
+            document.getElementById('monthly-medicare').textContent = `-${fmt(monthlyMedicare)}`;
+            document.getElementById('monthly-posttax').textContent = `-${fmt(monthlyPostTax)}`;
+            document.getElementById('monthly-final').textContent = fmt(monthlyFinalPay);
+
+            // Always keep first table title as Monthly
             document.querySelector('.table-title').textContent =
-                `${capFreq} Paycheck Based on Income of $${annualSalary.toLocaleString()}/year`;
+                `Monthly Paycheck Based on Income of $${annualSalary.toLocaleString()}/year`;
 
             if (payFrequency !== 'monthly') {
                 document.getElementById('frequencyResults').style.display = 'block';
-                ['gross', 'pretax', 'federal', 'state', 'city', 'social', 'medicare', 'posttax', 'final'].forEach(label => {
-                    document.getElementById(`freq-${label}`)
-                        .textContent = document.getElementById(`monthly-${label}`).textContent;
-                });
+
+                // Populate frequency-specific results in second table
+                document.getElementById('freq-gross').textContent = fmt(frequencyGrossPay);
+                document.getElementById('freq-pretax').textContent = `-${fmt(freqPreTax)}`;
+                document.getElementById('freq-federal').textContent = `-${fmt(freqFed)}`;
+                document.getElementById('freq-state').textContent = `-${fmt(freqState)}`;
+                document.getElementById('freq-city').textContent = `-${fmt(freqCity)}`;
+                document.getElementById('freq-social').textContent = `-${fmt(freqSocial)}`;
+                document.getElementById('freq-medicare').textContent = `-${fmt(freqMedicare)}`;
+                document.getElementById('freq-posttax').textContent = `-${fmt(freqPostTax)}`;
+                document.getElementById('freq-final').textContent = fmt(freqFinalPay);
+
+                const capFreq = payFrequency.charAt(0).toUpperCase() + payFrequency.slice(1);
                 document.getElementById('frequencyTitle').textContent =
                     `${capFreq} Paycheck Based on Income of $${annualSalary.toLocaleString()}/year`;
             } else {
@@ -801,7 +827,6 @@
 
             document.getElementById('stateRateInfo').textContent =
                 `Auto-applied Maryland state tax: ${suggestedStateRate}% based on your filing status and income`;
-
         }
 
         function handleCalculate() {
@@ -853,7 +878,7 @@
             return rate;
         }
 
-        
+
 
 
         function downloadPDF() {
