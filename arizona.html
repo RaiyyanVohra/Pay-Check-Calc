@@ -411,6 +411,7 @@
                     <div class="input-wrapper">
                         <input type="number" id="jobIncome" placeholder="60000" required>
                         <select id="incomeType">
+                            <option value="hourly">Hourly</option>
                             <option value="daily">Daily</option>
                             <option value="weekly">Weekly</option>
                             <option value="bi-weekly">Bi‑weekly</option>
@@ -431,6 +432,7 @@
                             data-tooltip="	U.S. federal tax applies in Arizona Ranges 10%-37%.">❓</span>
                     </label>
                     <select id="payFrequency" required>
+                        <option value="hourly">Hourly</option>
                         <option value="daily">Daily</option>
                         <option value="weekly">Weekly</option>
                         <option value="bi-weekly">Bi‑weekly</option>
@@ -692,6 +694,7 @@
         };
 
         const frequencyMultipliers = {
+            hourly: 2080,
             daily: 365,
             weekly: 52,
             'bi-weekly': 26,
@@ -737,14 +740,13 @@
             const jobIncome = +document.getElementById('jobIncome').value || 0;
             const incomeType = document.getElementById('incomeType').value;
             const payFrequency = document.getElementById('payFrequency').value;
-            const annualSalary = jobIncome * frequencyMultipliers[incomeType];
             const filingStatus = document.getElementById('filingStatus')?.value || 'single';
+            const annualSalary = jobIncome * frequencyMultipliers[incomeType];
             const suggestedStateRate = getArizonaStateTaxRate(annualSalary, filingStatus);
 
-            // Update stateTax field only if user hasn't modified it manually
+            // Auto-update state tax unless user modified
             const stateTaxInput = document.getElementById('stateTax');
             const rateInfo = document.getElementById('stateRateInfo');
-
             if (!stateTaxInput.getAttribute('data-user-modified')) {
                 stateTaxInput.value = suggestedStateRate;
                 rateInfo.textContent = `Auto-applied Arizona state tax: ${suggestedStateRate}% based on your filing status and income.`;
@@ -752,57 +754,74 @@
                 rateInfo.textContent = `(You manually modified the state tax rate)`;
             }
 
-
-            const grossPay = annualSalary / frequencyMultipliers[payFrequency];
-
-            const preTax = getTaxAmount(+document.getElementById('preTaxDeductions').value, taxUnits.preTax, grossPay);
-            const taxableIncome = grossPay - preTax;
-            const fed = getTaxAmount(+document.getElementById('federalTax').value, taxUnits.federal, taxableIncome);
-            const state = getTaxAmount(+document.getElementById('stateTax').value, taxUnits.state, taxableIncome);
-            const city = getTaxAmount(+document.getElementById('cityTax').value, taxUnits.city, taxableIncome);
-            const social = getTaxAmount(+document.getElementById('socialSecurityTax').value, taxUnits.socialSecurity, taxableIncome);
-            const medicare = getTaxAmount(+document.getElementById('medicareTax').value, taxUnits.medicare, taxableIncome);
-            const postTax = getTaxAmount(+document.getElementById('postTaxDeductions').value, taxUnits.postTax, grossPay);
-
-            const totalTaxes = fed + state + city + social + medicare;
-            const finalPay = grossPay - preTax - totalTaxes - postTax;
-
-            // populate UI
             const fmt = v => `$${v.toFixed(2)}`;
-            document.getElementById('monthly-gross').textContent = fmt(grossPay);
-            document.getElementById('monthly-pretax').textContent = `-${fmt(preTax)}`;
-            document.getElementById('monthly-federal').textContent = `-${fmt(fed)}`;
-            document.getElementById('monthly-state').textContent = `-${fmt(state)}`;
-            document.getElementById('monthly-city').textContent = `-${fmt(city)}`;
-            document.getElementById('monthly-social').textContent = `-${fmt(social)}`;
-            document.getElementById('monthly-medicare').textContent = `-${fmt(medicare)}`;
-            document.getElementById('monthly-posttax').textContent = `-${fmt(postTax)}`;
-            document.getElementById('monthly-final').textContent = fmt(finalPay);
 
-            const capFreq = payFrequency.charAt(0).toUpperCase() + payFrequency.slice(1);
-            document.querySelector('.table-title').textContent =
-                `${capFreq} Paycheck Based on Income of $${annualSalary.toLocaleString()}/year`;
+            // --- MONTHLY CALCULATIONS ---
+            const monthlyGrossPay = annualSalary / 12;
+            const monthlyPreTax = getTaxAmount(+document.getElementById('preTaxDeductions').value, taxUnits.preTax, monthlyGrossPay);
+            const monthlyTaxable = monthlyGrossPay - monthlyPreTax;
+            const monthlyFederal = getTaxAmount(+document.getElementById('federalTax').value, taxUnits.federal, monthlyTaxable);
+            const monthlyState = getTaxAmount(+document.getElementById('stateTax').value, taxUnits.state, monthlyTaxable);
+            const monthlyCity = getTaxAmount(+document.getElementById('cityTax').value, taxUnits.city, monthlyTaxable);
+            const monthlySocial = getTaxAmount(+document.getElementById('socialSecurityTax').value, taxUnits.socialSecurity, monthlyTaxable);
+            const monthlyMedicare = getTaxAmount(+document.getElementById('medicareTax').value, taxUnits.medicare, monthlyTaxable);
+            const monthlyPostTax = getTaxAmount(+document.getElementById('postTaxDeductions').value, taxUnits.postTax, monthlyGrossPay);
+            const monthlyFinal = monthlyGrossPay - monthlyPreTax - monthlyFederal - monthlyState - monthlyCity - monthlySocial - monthlyMedicare - monthlyPostTax;
 
+            document.getElementById('monthly-gross').textContent = fmt(monthlyGrossPay);
+            document.getElementById('monthly-pretax').textContent = `-${fmt(monthlyPreTax)}`;
+            document.getElementById('monthly-federal').textContent = `-${fmt(monthlyFederal)}`;
+            document.getElementById('monthly-state').textContent = `-${fmt(monthlyState)}`;
+            document.getElementById('monthly-city').textContent = `-${fmt(monthlyCity)}`;
+            document.getElementById('monthly-social').textContent = `-${fmt(monthlySocial)}`;
+            document.getElementById('monthly-medicare').textContent = `-${fmt(monthlyMedicare)}`;
+            document.getElementById('monthly-posttax').textContent = `-${fmt(monthlyPostTax)}`;
+            document.getElementById('monthly-final').textContent = fmt(monthlyFinal);
+
+            // --- TITLE UPDATE ---
+            document.querySelector('#monthlyResults .table-title').textContent =
+                `Monthly Paycheck Based on Income of $${annualSalary.toLocaleString()}/year`;
+
+            // --- FREQUENCY-SPECIFIC CALCULATIONS ---
             if (payFrequency !== 'monthly') {
+                const freqGrossPay = annualSalary / frequencyMultipliers[payFrequency];
+                const freqPreTax = getTaxAmount(+document.getElementById('preTaxDeductions').value, taxUnits.preTax, freqGrossPay);
+                const freqTaxable = freqGrossPay - freqPreTax;
+                const freqFederal = getTaxAmount(+document.getElementById('federalTax').value, taxUnits.federal, freqTaxable);
+                const freqState = getTaxAmount(+document.getElementById('stateTax').value, taxUnits.state, freqTaxable);
+                const freqCity = getTaxAmount(+document.getElementById('cityTax').value, taxUnits.city, freqTaxable);
+                const freqSocial = getTaxAmount(+document.getElementById('socialSecurityTax').value, taxUnits.socialSecurity, freqTaxable);
+                const freqMedicare = getTaxAmount(+document.getElementById('medicareTax').value, taxUnits.medicare, freqTaxable);
+                const freqPostTax = getTaxAmount(+document.getElementById('postTaxDeductions').value, taxUnits.postTax, freqGrossPay);
+                const freqFinal = freqGrossPay - freqPreTax - freqFederal - freqState - freqCity - freqSocial - freqMedicare - freqPostTax;
+
                 document.getElementById('frequencyResults').style.display = 'block';
-                ['gross', 'pretax', 'federal', 'state', 'city', 'social', 'medicare', 'posttax', 'final'].forEach(label => {
-                    document.getElementById(`freq-${label}`)
-                        .textContent = document.getElementById(`monthly-${label}`).textContent;
-                });
+                document.getElementById('freq-gross').textContent = fmt(freqGrossPay);
+                document.getElementById('freq-pretax').textContent = `-${fmt(freqPreTax)}`;
+                document.getElementById('freq-federal').textContent = `-${fmt(freqFederal)}`;
+                document.getElementById('freq-state').textContent = `-${fmt(freqState)}`;
+                document.getElementById('freq-city').textContent = `-${fmt(freqCity)}`;
+                document.getElementById('freq-social').textContent = `-${fmt(freqSocial)}`;
+                document.getElementById('freq-medicare').textContent = `-${fmt(freqMedicare)}`;
+                document.getElementById('freq-posttax').textContent = `-${fmt(freqPostTax)}`;
+                document.getElementById('freq-final').textContent = fmt(freqFinal);
+
+                const capFreq = payFrequency.charAt(0).toUpperCase() + payFrequency.slice(1);
                 document.getElementById('frequencyTitle').textContent =
                     `${capFreq} Paycheck Based on Income of $${annualSalary.toLocaleString()}/year`;
             } else {
                 document.getElementById('frequencyResults').style.display = 'none';
             }
 
-            // enable download button if valid
+            // Enable download button
             const isValid = document.getElementById('jobIncome').value.trim() && document.getElementById('federalTax').value.trim();
             document.getElementById('downloadBtn').disabled = !isValid;
 
+            // Final tax line
             document.getElementById('stateRateInfo').textContent =
-                `Auto-applied Arizona state tax: ${suggestedStateRate}% based on your filing status and income`;
-
+                `Auto-applied Arizona state tax: ${suggestedStateRate}% based on your filing status and income.`;
         }
+        
 
         function handleCalculate() {
             calculatePaycheck();
