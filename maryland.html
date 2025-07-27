@@ -785,42 +785,53 @@
             // populate UI
             const fmt = v => `$${v.toFixed(2)}`;
 
-            // Always populate monthly results in first table
-            document.getElementById('monthly-gross').textContent = fmt(monthlyGrossPay);
-            document.getElementById('monthly-pretax').textContent = `-${fmt(monthlyPreTax)}`;
-            document.getElementById('monthly-federal').textContent = `-${fmt(monthlyFed)}`;
-            document.getElementById('monthly-state').textContent = `-${fmt(monthlyState)}`;
-            document.getElementById('monthly-city').textContent = `-${fmt(monthlyCity)}`;
-            document.getElementById('monthly-social').textContent = `-${fmt(monthlySocial)}`;
-            document.getElementById('monthly-medicare').textContent = `-${fmt(monthlyMedicare)}`;
-            document.getElementById('monthly-posttax').textContent = `-${fmt(monthlyPostTax)}`;
-            document.getElementById('monthly-final').textContent = fmt(monthlyFinalPay);
+            if (payFrequency === 'monthly') {
+                // Show monthly in first table, hide second table
+                document.getElementById('monthly-gross').textContent = fmt(monthlyGrossPay);
+                document.getElementById('monthly-pretax').textContent = `-${fmt(monthlyPreTax)}`;
+                document.getElementById('monthly-federal').textContent = `-${fmt(monthlyFed)}`;
+                document.getElementById('monthly-state').textContent = `-${fmt(monthlyState)}`;
+                document.getElementById('monthly-city').textContent = `-${fmt(monthlyCity)}`;
+                document.getElementById('monthly-social').textContent = `-${fmt(monthlySocial)}`;
+                document.getElementById('monthly-medicare').textContent = `-${fmt(monthlyMedicare)}`;
+                document.getElementById('monthly-posttax').textContent = `-${fmt(monthlyPostTax)}`;
+                document.getElementById('monthly-final').textContent = fmt(monthlyFinalPay);
 
-            // Always keep first table title as Monthly
-            document.querySelector('.table-title').textContent =
-                `Monthly Paycheck Based on Income of $${annualSalary.toLocaleString()}/year`;
+                document.querySelector('.table-title').textContent =
+                    `Monthly Paycheck Based on Income of $${annualSalary.toLocaleString()}/year`;
 
-            if (payFrequency !== 'monthly') {
-                document.getElementById('frequencyResults').style.display = 'block';
-
-                // Populate frequency-specific results in second table
-                document.getElementById('freq-gross').textContent = fmt(frequencyGrossPay);
-                document.getElementById('freq-pretax').textContent = `-${fmt(freqPreTax)}`;
-                document.getElementById('freq-federal').textContent = `-${fmt(freqFed)}`;
-                document.getElementById('freq-state').textContent = `-${fmt(freqState)}`;
-                document.getElementById('freq-city').textContent = `-${fmt(freqCity)}`;
-                document.getElementById('freq-social').textContent = `-${fmt(freqSocial)}`;
-                document.getElementById('freq-medicare').textContent = `-${fmt(freqMedicare)}`;
-                document.getElementById('freq-posttax').textContent = `-${fmt(freqPostTax)}`;
-                document.getElementById('freq-final').textContent = fmt(freqFinalPay);
+                document.getElementById('frequencyResults').style.display = 'none';
+            } else {
+                // Show selected frequency in first table, monthly in second table
+                document.getElementById('monthly-gross').textContent = fmt(frequencyGrossPay);
+                document.getElementById('monthly-pretax').textContent = `-${fmt(freqPreTax)}`;
+                document.getElementById('monthly-federal').textContent = `-${fmt(freqFed)}`;
+                document.getElementById('monthly-state').textContent = `-${fmt(freqState)}`;
+                document.getElementById('monthly-city').textContent = `-${fmt(freqCity)}`;
+                document.getElementById('monthly-social').textContent = `-${fmt(freqSocial)}`;
+                document.getElementById('monthly-medicare').textContent = `-${fmt(freqMedicare)}`;
+                document.getElementById('monthly-posttax').textContent = `-${fmt(freqPostTax)}`;
+                document.getElementById('monthly-final').textContent = fmt(freqFinalPay);
 
                 const capFreq = payFrequency.charAt(0).toUpperCase() + payFrequency.slice(1);
-                document.getElementById('frequencyTitle').textContent =
+                document.querySelector('.table-title').textContent =
                     `${capFreq} Paycheck Based on Income of $${annualSalary.toLocaleString()}/year`;
-            } else {
-                document.getElementById('frequencyResults').style.display = 'none';
-            }
 
+                // Show monthly results in second table
+                document.getElementById('frequencyResults').style.display = 'block';
+                document.getElementById('freq-gross').textContent = fmt(monthlyGrossPay);
+                document.getElementById('freq-pretax').textContent = `-${fmt(monthlyPreTax)}`;
+                document.getElementById('freq-federal').textContent = `-${fmt(monthlyFed)}`;
+                document.getElementById('freq-state').textContent = `-${fmt(monthlyState)}`;
+                document.getElementById('freq-city').textContent = `-${fmt(monthlyCity)}`;
+                document.getElementById('freq-social').textContent = `-${fmt(monthlySocial)}`;
+                document.getElementById('freq-medicare').textContent = `-${fmt(monthlyMedicare)}`;
+                document.getElementById('freq-posttax').textContent = `-${fmt(monthlyPostTax)}`;
+                document.getElementById('freq-final').textContent = fmt(monthlyFinalPay);
+
+                document.getElementById('frequencyTitle').textContent =
+                    `Monthly Paycheck Based on Income of $${annualSalary.toLocaleString()}/year`;
+            }
             // enable download button if valid
             const isValid = document.getElementById('jobIncome').value.trim() && document.getElementById('federalTax').value.trim();
             document.getElementById('downloadBtn').disabled = !isValid;
@@ -913,7 +924,8 @@
 
 
             const addSection = (title, data) => {
-                doc.setFont('helvetica', 'bold').setFontSize(13).text(title, 40, y); y += 14;
+                doc.setFont('helvetica', 'bold').setFontSize(13).text(title, 40, y);
+                y += 14;
                 doc.setFont('helvetica', 'normal').setFontSize(11);
                 data.forEach(([lbl, amt]) => {
                     doc.text(lbl, 40, y);
@@ -923,26 +935,55 @@
                 y += 10;
             };
 
-            const monthlyData = [
-                ['Gross Pay', document.getElementById('monthly-gross').textContent],
-                ['Pre-Tax Deductions', document.getElementById('monthly-pretax').textContent],
-                ['Federal Income Tax', document.getElementById('monthly-federal').textContent],
-                ['State Income Tax', document.getElementById('monthly-state').textContent],
-                ['City Income Tax', document.getElementById('monthly-city').textContent],
-                ['Social Security Tax', document.getElementById('monthly-social').textContent],
-                ['Medicare Tax', document.getElementById('monthly-medicare').textContent],
-                ['Post-Tax Deductions', document.getElementById('monthly-posttax').textContent],
-                ['Final Paycheck', document.getElementById('monthly-final').textContent],
-            ];
-            addSection('Monthly Breakdown', monthlyData);
+            const payFreq = document.getElementById('payFrequency').value;
 
-            const freq = document.getElementById('payFrequency').value;
-            if (freq !== 'monthly') {
-                const freqData = ['gross', 'pretax', 'federal', 'state', 'city', 'social', 'medicare', 'posttax', 'final']
-                    .map(key => [key.replace(/^\w/, c => c.toUpperCase()), document.getElementById(`freq-${key}`).textContent]);
-                addSection(`${freq.charAt(0).toUpperCase() + freq.slice(1)} Breakdown`, freqData);
+            if (payFreq === 'monthly') {
+                // When frequency is monthly, show only monthly data
+                const monthlyData = [
+                    ['Gross Pay', document.getElementById('monthly-gross').textContent],
+                    ['Pre-Tax Deductions', document.getElementById('monthly-pretax').textContent],
+                    ['Federal Income Tax', document.getElementById('monthly-federal').textContent],
+                    ['State Income Tax', document.getElementById('monthly-state').textContent],
+                    ['City Income Tax', document.getElementById('monthly-city').textContent],
+                    ['Social Security Tax', document.getElementById('monthly-social').textContent],
+                    ['Medicare Tax', document.getElementById('monthly-medicare').textContent],
+                    ['Post-Tax Deductions', document.getElementById('monthly-posttax').textContent],
+                    ['Final Paycheck', document.getElementById('monthly-final').textContent],
+                ];
+                addSection('Monthly Breakdown', monthlyData);
+            } else {
+                // When frequency is NOT monthly:
+                // monthly- elements contain the selected frequency data
+                // freq- elements contain the monthly data
+
+                // Show Monthly first (from freq- elements)
+                const monthlyData = [
+                    ['Gross Pay', document.getElementById('freq-gross').textContent],
+                    ['Pre-Tax Deductions', document.getElementById('freq-pretax').textContent],
+                    ['Federal Income Tax', document.getElementById('freq-federal').textContent],
+                    ['State Income Tax', document.getElementById('freq-state').textContent],
+                    ['City Income Tax', document.getElementById('freq-city').textContent],
+                    ['Social Security Tax', document.getElementById('freq-social').textContent],
+                    ['Medicare Tax', document.getElementById('freq-medicare').textContent],
+                    ['Post-Tax Deductions', document.getElementById('freq-posttax').textContent],
+                    ['Final Paycheck', document.getElementById('freq-final').textContent],
+                ];
+                addSection('Monthly Breakdown', monthlyData);
+
+                // Then show selected frequency (from monthly- elements)
+                const freqData = [
+                    ['Gross Pay', document.getElementById('monthly-gross').textContent],
+                    ['Pre-Tax Deductions', document.getElementById('monthly-pretax').textContent],
+                    ['Federal Income Tax', document.getElementById('monthly-federal').textContent],
+                    ['State Income Tax', document.getElementById('monthly-state').textContent],
+                    ['City Income Tax', document.getElementById('monthly-city').textContent],
+                    ['Social Security Tax', document.getElementById('monthly-social').textContent],
+                    ['Medicare Tax', document.getElementById('monthly-medicare').textContent],
+                    ['Post-Tax Deductions', document.getElementById('monthly-posttax').textContent],
+                    ['Final Paycheck', document.getElementById('monthly-final').textContent],
+                ];
+                addSection(`${payFreq.charAt(0).toUpperCase() + payFreq.slice(1)} Breakdown`, freqData);
             }
-
             y += 4;
             doc.setFontSize(9).setFont('helvetica', 'italic').setTextColor(100)
                 .text('This report is an automated estimate and should be verified with a tax professional.', 40, y);
